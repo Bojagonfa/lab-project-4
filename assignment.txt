@@ -1,0 +1,364 @@
+ 
+1.	  
+using System;
+using System.Windows.Forms;
+using System.Windows.Media;
+
+namespace MDI_demo
+{
+    public partial class MainForm : Form
+    {
+        private MediaPlayer alarmPlayer;
+        private DateTime startTime;
+        private TimeSpan elapsedTime;
+
+        public MainForm()
+        {
+            InitializeComponent();
+
+            // Initialize components
+            alarmPlayer = new MediaPlayer();
+            var path = new System.Uri(@"C:\Users\Dag\Desktop\alarm.wav");
+            alarmPlayer.Open(path);
+        }
+
+        private void timer_Tick(object sender, EventArgs e)
+        {
+            elapsedTime = DateTime.Now - startTime;
+            labelElapsedTime.Text = string.Format("{0}:{1:00}", (int)elapsedTime.TotalMinutes, (int)elapsedTime.Seconds);
+
+            if (elapsedTime.Seconds == 10)
+            {
+                timer.Enabled = false;
+                alarmPlayer.Play();
+            }
+        }
+
+        private void btnStart_Click(object sender, EventArgs e)
+        {
+            startTime = DateTime.Now;
+            timer.Enabled = true;
+        }
+
+        private void btnStop_Click(object sender, EventArgs e)
+        {
+            timer.Enabled = false;
+        }
+    }
+}
+               
+
+
+
+
+ 2   
+   
+using System;
+using System.Windows.Forms;
+
+namespace MDI_demo
+{
+    public partial class MainForm : Form
+    {
+        public MainForm()
+        {
+            InitializeComponent();
+        }
+
+        private void OpenMdiChildForm(Form childForm)
+        {
+            childForm.MdiParent = this;
+            childForm.Show();
+        }
+
+        private void comboBoxToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            OpenMdiChildForm(new ComboBoxDemoForm());
+        }
+
+        private void arrangeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            LayoutMdi(MdiLayout.ArrangeIcons);
+        }
+
+        private void tileHorizontalToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            LayoutMdi(MdiLayout.TileHorizontal);
+        }
+
+        private void tileVerticalToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            LayoutMdi(MdiLayout.TileVertical);
+        }
+
+        private void cascadeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            LayoutMdi(MdiLayout.Cascade);
+        }
+
+        private void tabbedDemoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            OpenMdiChildForm(new TabbedDemoForm());
+        }
+
+        private void alarmToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            OpenMdiChildForm(new AlarmForm());
+        }
+    }
+}     
+
+
+
+3.	  
+using System;
+using System.Drawing;
+using System.Windows.Forms;
+
+namespace MDI_demo
+{
+    public partial class ComboBoxDemoForm : Form
+    {
+        private readonly Graphics graphics;
+        private readonly Pen pen = new Pen(Color.DarkRed);
+        private readonly SolidBrush solidBrush = new SolidBrush(Color.DarkRed);
+
+        public ComboBoxDemoForm()
+        {
+            InitializeComponent();
+            graphics = CreateGraphics();
+        }
+
+        private void DrawShape(ShapeType shapeType)
+        {
+            graphics.Clear(Color.White);
+
+            switch (shapeType)
+            {
+                case ShapeType.Circle:
+                    graphics.DrawEllipse(pen, 220, 20, 200, 200);
+                    break;
+
+                case ShapeType.Square:
+                    graphics.DrawRectangle(pen, 220, 20, 200, 200);
+                    break;
+
+                case ShapeType.FilledCircle:
+                    graphics.FillEllipse(solidBrush, 220, 20, 200, 200);
+                    break;
+
+                case ShapeType.FilledSquare:
+                    graphics.FillRectangle(solidBrush, 220, 20, 200, 200);
+                    break;
+
+                case ShapeType.Pie:
+                    graphics.FillPie(solidBrush, 220, 20, 200, 200, 70, 200);
+                    break;
+            }
+        }
+
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (Enum.TryParse(comboBox1.SelectedItem.ToString(), out ShapeType selectedShape))
+            {
+                DrawShape(selectedShape);
+            }
+        }
+
+        private void ComboBoxDemoForm_Load(object sender, EventArgs e)
+        {
+        }
+
+        private enum ShapeType
+        {
+            Circle,
+            Square,
+            FilledCircle,
+            FilledSquare,
+            Pie
+        }
+    }
+}
+
+
+4.	   
+using System;
+using System.IO;
+using System.Windows.Forms;
+
+namespace DirInfoDemo
+{
+    public partial class Form1 : Form
+    {
+        private DriveInfo[] myDrives;
+        private DriveInfo selectedDrive;
+
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            myDrives = DriveInfo.GetDrives();
+            comboBox1.Items.AddRange(myDrives);
+        }
+
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            selectedDrive = (DriveInfo)comboBox1.SelectedItem;
+            DisplayDriveInfo(selectedDrive);
+        }
+
+        private void tabControl1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            DisplayFilesInfo(selectedDrive);
+        }
+
+        private void DisplayDriveInfo(DriveInfo drive)
+        {
+            listBox1.Items.Clear();
+            listBox1.Items.Add("Drive: " + drive.Name);
+            listBox1.Items.Add("Type: " + drive.DriveType);
+
+            if (drive.IsReady)
+            {
+                listBox1.Items.Add("Tot. free space: " + drive.TotalFreeSpace);
+                listBox1.Items.Add("Format: " + drive.DriveFormat);
+                listBox1.Items.Add("Volume label: " + drive.VolumeLabel);
+            }
+
+            label2.Text = "Files in drive: " + drive;
+        }
+
+        private void DisplayFilesInfo(DriveInfo drive)
+        {
+            listBox2.Items.Clear();
+
+            if (drive != null && drive.IsReady)
+            {
+                DirectoryInfo dir = new DirectoryInfo(drive.ToString());
+                FileInfo[] txtFiles = dir.GetFiles("*.txt");
+
+                listBox2.Items.Add("Text files found: " + txtFiles.Length);
+
+                foreach (FileInfo file in txtFiles)
+                {
+                    listBox2.Items.Add(file.Name);
+                    listBox2.Items.Add(file.Length + " bytes");
+                    listBox2.Items.Add(file.CreationTime);
+                }
+            }
+        }
+    }
+}   
+
+
+
+5.	  
+
+using System;
+using System.Windows.Forms;
+
+namespace TreeEditor
+{
+    public partial class MainForm : Form
+    {
+        public MainForm()
+        {
+            InitializeComponent();
+            InitializeTreeView();
+        }
+
+        private void InitializeTreeView()
+        {
+            treeView1.Nodes.Add("Root");
+
+            // You can add some sample nodes here
+            treeView1.Nodes[0].Nodes.Add("Node 1");
+            treeView1.Nodes[0].Nodes.Add("Node 2");
+            treeView1.Nodes[0].Nodes[0].Nodes.Add("Node 1.1");
+            treeView1.Nodes[0].Nodes[0].Nodes.Add("Node 1.2");
+
+            treeView1.ExpandAll();
+        }
+
+        private void btnAddRoot_Click(object sender, EventArgs e)
+        {
+            string rootName = textbox1.Text;
+            treeView1.Nodes.Add(rootName);
+        }
+
+        private void btnAddChild_Click(object sender, EventArgs e)
+        {
+            if (treeView1.SelectedNode != null)
+            {
+                string childName = textbox1.Text;
+                treeView1.SelectedNode.Nodes.Add(childName);
+                treeView1.SelectedNode.Expand();
+            }
+        }
+
+        private void btnDeleteNode_Click(object sender, EventArgs e)
+        {
+            if (treeView1.SelectedNode != null && treeView1.SelectedNode.Parent != null)
+            {
+                treeView1.SelectedNode.Remove();
+            }
+        }
+    }
+}
+6.	   
+       
+
+using System;
+using System.IO;
+using System.Windows.Forms;
+
+namespace TreeViewDirectoryStructure
+{
+    public partial class MainForm : Form
+    {
+        public MainForm()
+        {
+            InitializeComponent();
+        }
+
+        private void MainForm_Load(object sender, EventArgs e)
+        {
+            // Specify the root directory to display
+            string rootDirectory = @"C:\";
+
+            // Populate the TreeView with the directory structure
+            LoadDirectory(rootDirectory);
+        }
+
+        private void LoadDirectory(string path, TreeNode parentNode = null)
+        {
+            try
+            {
+                // Get all directories in the current path
+                string[] directories = Directory.GetDirectories(path);
+
+                // Create a TreeNode for each directory
+                foreach (string directory in directories)
+                {
+                    TreeNode node = new TreeNode(Path.GetFileName(directory));
+                    LoadDirectory(directory, node); // Recursively load subdirectories
+                    parentNode?.Nodes.Add(node); // Add the node to the parent node if applicable
+                }
+            }
+            catch (UnauthorizedAccessException)
+            {
+                // Handle unauthorized access errors (e.g., access denied to certain directories)
+                parentNode?.Nodes.Add("Access Denied");
+            }
+            catch (Exception ex)
+            {
+                // Handle other exceptions
+                parentNode?.Nodes.Add("Error: " + ex.Message);
+            }
+        }
+    }
+}
+
